@@ -2,7 +2,7 @@
 Syncs Dydaks Urgent deadlines to the canvas calendar
 
 
-# Step one, download the file
+# Step one, download the test_form.exe and config.ini
 
 Open the confi.ini file and add your information as follows 
 ```
