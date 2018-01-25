@@ -21,8 +21,10 @@ And use the Canvas auth token you generated
 
 
 #how to gen canvas auth token
+
 https://i.imgur.com/suIYorc.gif
 
 
 #how to run program
+
 https://i.imgur.com/jgGvAgq.gifv
