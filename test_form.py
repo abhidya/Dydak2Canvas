@@ -1,3 +1,5 @@
+import sys
+sys.setrecursionlimit(5000)
 import datetime
 import requests
 from requests import Session
@@ -13,6 +15,10 @@ val1 = config.get("information", "Canvas-Auth")
 
 
 
+#username = 'abhidya'
+#password = 'Mannybhai!'
+#val2 = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm3464web.html'
+#val1 = '7641~0jrmbKHpxeUFgE2jrkmruZEZv3OrrXrC2tvHnQKYMJJpsUakaYlwgmWgWjBtTcJY'
 
 
 print( val1 + " " + val2)
@@ -38,8 +44,13 @@ form['password'] = password
 browser.submit_form(form)
 poop = browser.find('body')
 poop = str(poop['class'])
-poop = find_between(poop, "'context-", "']")
+poop = find_between(poop, "'context-", "', 'lato-font-not-loaded-yet']")
+print(poop)
 user = poop
+
+
+#personal_site = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm3464web.html'
+#Canvas_authcode = '7641~0jrmbKHpxeUFgE2jrkmruZEZv3OrrXrC2tvHnQKYMJJpsUakaYlwgmWgWjBtTcJY'
 personal_site = val2
 Canvas_authcode = val1
 headers = {
@@ -65,15 +76,13 @@ for list in hrs:
             'calendar_event[title]': (None, line2),
             'calendar_event[start_at]': (None, fun),
             'calendar_event[end_at]': (None, fun),
-            'calendar_event[description]': (None, '''<a href="http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm3464web.html">Dydak's Hell Hole</a>''')
+            'calendar_event[description]': (None, '''<a href="''' + personal_site + ''''">Dydak's Hell Hole</a>''')
         }
         response = c.post('https://utk.instructure.com/api/v1/calendar_events.json', headers=headers, files=files)
         response = response.json()
         if "errors" in response:
             print(
-                """Content-type: text/html
-
-                Failure: Exit the script<br/>""")
+                response)
     else:
      print("Assignment ALREADY ADDED, SKIPPING")
 
