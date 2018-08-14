@@ -15,10 +15,10 @@ val1 = config.get("information", "Canvas-Auth")
 
 
 
-#username = 'abhidya'
-#password = 'Mannybhai!'
-#val2 = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm3464web.html'
-#val1 = '7641~0jrmbKHpxeUFgE2jrkmruZEZv3OrrXrC2tvHnQKYMJJpsUakaYlwgmWgWjBtTcJY'
+#username = 'username'
+#password = 'password'
+#val2 = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm1234web.html'
+#val1 = '7456~0jrmbKHpxIHGFRTYHertyuFDE$%THuh456yHGFYMJJpsUakaYlwgmWgWjBtTcJY'
 
 
 print( val1 + " " + val2)
