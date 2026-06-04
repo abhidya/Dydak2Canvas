@@ -1,6 +1,14 @@
 # Dydak2Canvas
 Syncs Dydaks Urgent deadlines to the canvas calendar
 
+## Archive status
+
+This is an older Canvas automation demo. It is preserved for portfolio context; Canvas APIs, auth flows, and the original course website may have changed.
+
+## Credential hygiene
+
+Do not commit real Canvas usernames, passwords, auth tokens, or personal grade links. Use `config.ini` only as a template and keep real local credentials in an untracked copy.
+
 
 # Step one, download the test_form.exe and config.ini
 
