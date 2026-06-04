@@ -1,91 +1,71 @@
-import sys
-sys.setrecursionlimit(5000)
-import datetime
-import requests
-from requests import Session
-from robobrowser import RoboBrowser
-import configparser
+"""Offline Dydak deadline parser for the archived Canvas sync project."""
 
-config = configparser.ConfigParser()
-config.read("config.ini")
-username = config.get("information", "Username")
-password = config.get("information", "Password")
-val2 = config.get("information", "Link-to-Personal-Site")
-val1 = config.get("information", "Canvas-Auth")
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import re
+from dataclasses import dataclass
+from html.parser import HTMLParser
+from pathlib import Path
 
 
-
-#username = 'username'
-#password = 'password'
-#val2 = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm1234web.html'
-#val1 = '7456~0jrmbKHpxIHGFRTYHertyuFDE$%THuh456yHGFYMJJpsUakaYlwgmWgWjBtTcJY'
-
-
-print( val1 + " " + val2)
-
-def find_between( s, first, last ):
-    try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        return s[start:end]
-    except ValueError:
-        return ""
-
-requests.packages.urllib3.disable_warnings()
-c = Session()
-c.verify = False
-
-browser = RoboBrowser(session=c,parser='html.parser')
-
-browser.open('https://utk.instructure.com/')
-form = browser.get_form()
-form['username'] = username
-form['password'] = password
-browser.submit_form(form)
-poop = browser.find('body')
-poop = str(poop['class'])
-poop = find_between(poop, "'context-", "', 'lato-font-not-loaded-yet']")
-print(poop)
-user = poop
+@dataclass(frozen=True)
+class Deadline:
+    title: str
+    due_date: str
 
 
-#personal_site = 'http://www.math.utk.edu/~dydak/251Sp18/Grades/xmcm3464web.html'
-#Canvas_authcode = '7641~0jrmbKHpxeUFgE2jrkmruZEZv3OrrXrC2tvHnQKYMJJpsUakaYlwgmWgWjBtTcJY'
-personal_site = val2
-Canvas_authcode = val1
-headers = {
-    'Authorization': 'Bearer ' + Canvas_authcode}
+class StrongTextParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._in_strong = False
+        self.items: list[str] = []
 
-browser.open(personal_site)
-hrs = browser.find_all("strong")
-for list in hrs:
-    line = list.text
-   # print(line)
-   # print(check)
-    dydak_date = find_between(line, "on ", " (")
-    line2 = find_between(line, ". ", "M:")
-    manny_date = datetime.datetime.strptime(dydak_date, "%m/%d/%y").strftime("%Y-%m-%d")
-    check = c.get("https://utk.instructure.com/api/v1/calendar_events?context_codes%5B%5D=" + user + "&context_codes%5B%5D=course_45009&context_codes%5B%5D=course_45015&context_codes%5B%5D=course_46248&context_codes%5B%5D=course_48317&context_codes%5B%5D=course_9088&start_date=" + manny_date + "T05%3A00%3A00.000Z&end_date=2018-09-09T05%3A00%3A00.000Z", headers=headers)
-    check = str(check.json())
-    print(line2)
-    if line2 not in check:
-        #print(manny_date)
-        fun = manny_date + 'T21:00:00Z'
-        files = {
-            'calendar_event[context_code]': (None, user),
-            'calendar_event[title]': (None, line2),
-            'calendar_event[start_at]': (None, fun),
-            'calendar_event[end_at]': (None, fun),
-            'calendar_event[description]': (None, '''<a href="''' + personal_site + ''''">Dydak's Hell Hole</a>''')
-        }
-        response = c.post('https://utk.instructure.com/api/v1/calendar_events.json', headers=headers, files=files)
-        response = response.json()
-        if "errors" in response:
-            print(
-                response)
-    else:
-     print("Assignment ALREADY ADDED, SKIPPING")
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() == "strong":
+            self._in_strong = True
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "strong":
+            self._in_strong = False
+
+    def handle_data(self, data: str) -> None:
+        if self._in_strong and data.strip():
+            self.items.append(data.strip())
 
 
+def parse_deadlines(html: str) -> list[Deadline]:
+    parser = StrongTextParser()
+    parser.feed(html)
+    deadlines: list[Deadline] = []
+
+    for line in parser.items:
+        date_match = re.search(r"on (\d{1,2}/\d{1,2}/\d{2})", line)
+        title_match = re.search(r"\.\s*(.*?)\s*M:", line)
+        if not date_match or not title_match:
+            continue
+        due_date = dt.datetime.strptime(date_match.group(1), "%m/%d/%y").strftime("%Y-%m-%d")
+        deadlines.append(Deadline(title=title_match.group(1), due_date=due_date))
+
+    return deadlines
 
 
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Parse Dydak deadline HTML without Canvas login or API calls.")
+    parser.add_argument("--fixture", type=Path, default=Path("fixtures/dydak_deadlines.html"))
+    parser.add_argument("--live", action="store_true", help="Always refused in this archive.")
+    args = parser.parse_args()
+
+    if args.live:
+        raise SystemExit("Live Canvas sync is disabled in this archive. Use the offline parser fixture.")
+
+    deadlines = parse_deadlines(args.fixture.read_text(encoding="utf-8"))
+    for item in deadlines:
+        print(f"{item.due_date}: {item.title}")
+    print(f"parsed_deadlines={len(deadlines)} network_calls=0")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
